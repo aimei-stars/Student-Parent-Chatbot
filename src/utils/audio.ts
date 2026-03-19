@@ -17,7 +17,7 @@ export class AudioProcessor {
 
   // 150ms jitter buffer — gives Android time to queue next chunk
   // before previous finishes, preventing pops and pauses
-  private readonly JITTER_DELAY = 0.15;
+  private readonly JITTER_DELAY = 0.30;
 
   constructor(private onAudioData: (base64Data: string) => void) {}
 
