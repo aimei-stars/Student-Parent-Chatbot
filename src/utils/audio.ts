@@ -1,6 +1,6 @@
 /**
  * Audio processing utilities for the Live API
- * Mobile-optimized: wake lock, larger buffers, echo prevention, 150ms jitter buffer
+ * Mobile-optimized: suspends recording during playback to prevent choppy audio
  */
 
 export class AudioProcessor {
@@ -15,9 +15,7 @@ export class AudioProcessor {
   private isSpeaking = false;
   private wakeLock: any = null;
 
-  // 150ms jitter buffer — gives Android time to queue next chunk
-  // before previous finishes, preventing pops and pauses
-  private readonly JITTER_DELAY = 0.30;
+  private readonly JITTER_DELAY = 0.15;
 
   constructor(private onAudioData: (base64Data: string) => void) {}
 
@@ -59,12 +57,10 @@ export class AudioProcessor {
 
     this.source = this.recordingContext.createMediaStreamSource(this.stream);
 
-    // Larger buffer for Android stability
     const bufferSize = 8192;
     this.scriptNode = this.recordingContext.createScriptProcessor(bufferSize, 1, 1);
 
     this.scriptNode.onaudioprocess = (e) => {
-      // Block mic while assistant is speaking — prevents echo feedback loop
       if (this.isSpeaking) return;
       const inputData = e.inputBuffer.getChannelData(0);
       const pcmData = this.floatTo16BitPCM(inputData);
@@ -74,6 +70,18 @@ export class AudioProcessor {
 
     this.source.connect(this.scriptNode);
     this.scriptNode.connect(this.recordingContext.destination);
+  }
+
+  private async suspendRecording() {
+    if (this.recordingContext && this.recordingContext.state === 'running') {
+      try { await this.recordingContext.suspend(); } catch (e) {}
+    }
+  }
+
+  private async resumeRecording() {
+    if (this.recordingContext && this.recordingContext.state === 'suspended') {
+      try { await this.recordingContext.resume(); } catch (e) {}
+    }
   }
 
   stopRecording() {
@@ -129,7 +137,6 @@ export class AudioProcessor {
       this.isPlaybackStarted = false;
     }
 
-    // Resume context if Android suspended it to save battery
     if (this.playbackContext.state === 'suspended') {
       await this.playbackContext.resume();
     }
@@ -153,26 +160,27 @@ export class AudioProcessor {
     bufferSource.buffer = audioBuffer;
     bufferSource.connect(this.playbackContext.destination);
 
-    // Mute mic while assistant is speaking
     this.isSpeaking = true;
+    await this.suspendRecording();
+
     this.activeSources.add(bufferSource);
 
     bufferSource.onended = () => {
       this.activeSources.delete(bufferSource);
-      // Re-open mic only after all chunks finish + 400ms buffer
       if (this.activeSources.size === 0) {
-        setTimeout(() => { this.isSpeaking = false; }, 400);
+        setTimeout(async () => {
+          this.isSpeaking = false;
+          await this.resumeRecording();
+        }, 400);
       }
     };
 
     const currentTime = this.playbackContext.currentTime;
 
     if (!this.isPlaybackStarted) {
-      // First chunk — start with jitter buffer delay for Android to stabilize
       this.nextStartTime = currentTime + this.JITTER_DELAY;
       this.isPlaybackStarted = true;
     } else if (this.nextStartTime < currentTime) {
-      // Fell behind schedule — reset with jitter buffer to catch up smoothly
       this.nextStartTime = currentTime + this.JITTER_DELAY;
     }
 
@@ -190,6 +198,9 @@ export class AudioProcessor {
     this.activeSources.clear();
     this.nextStartTime = 0;
     this.isPlaybackStarted = false;
-    setTimeout(() => { this.isSpeaking = false; }, 400);
+    setTimeout(async () => {
+      this.isSpeaking = false;
+      await this.resumeRecording();
+    }, 400);
   }
 }
