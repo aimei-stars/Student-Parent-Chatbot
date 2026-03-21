@@ -211,10 +211,4 @@ export default function LiveAssistant() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="text-center py-4 border-t border-stone-100">
-        <p className="text-stone-400 text-xs uppercase tracking-widest">Villa Fundamental • Science Department</p>
-      </footer>
-    </div>
-  );
-}
+
