@@ -197,7 +197,7 @@ export default function LiveAssistant() {
             <Mail className="w-4 h-4" />
             <h3 className="font-bold text-sm uppercase tracking-wider">Contact</h3>
           </div>
-          <p className="text-stone-800 font-bold text-sm break-all">hsinjan.peng@sausd.us</p>
+          <p className="text-stone-800 font-bold text-sm break-all">Call the school office</p>
           <p className="text-stone-800 font-bold text-sm">ParentSquare App</p>
         </div>
         <div className="bg-[#C41E3A] p-6 rounded-3xl shadow-md border border-white/10 space-y-3 text-white">
