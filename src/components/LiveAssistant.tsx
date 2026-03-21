@@ -21,12 +21,10 @@ export default function LiveAssistant() {
   useEffect(() => { isRecordingRef.current = isRecording; }, [isRecording]);
   useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => { cleanupSession(); };
   }, []);
 
-  // Shared cleanup — stops audio AND closes session safely
   const cleanupSession = () => {
     if (audioProcessorRef.current) {
       audioProcessorRef.current.resetPlayback();
@@ -59,7 +57,6 @@ export default function LiveAssistant() {
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
-            // Aoede supports both English and Spanish naturally
             voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
           },
           systemInstruction: PERSONA_PROMPT,
@@ -116,7 +113,6 @@ export default function LiveAssistant() {
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto p-4 md:p-8 space-y-8">
 
-      {/* Header */}
       <header className="text-center space-y-2">
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
@@ -133,7 +129,6 @@ export default function LiveAssistant() {
         </p>
       </header>
 
-      {/* Main Interaction Area */}
       <main className="flex-1 flex flex-col items-center justify-center space-y-12">
         <motion.div
           onClick={status === 'active' ? stopSession : startSession}
@@ -182,7 +177,6 @@ export default function LiveAssistant() {
         </motion.div>
       </main>
 
-      {/* Quick Info Cards */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-8">
         <div className="bg-[#002366] p-6 rounded-3xl shadow-md border border-white/10 space-y-3 text-white">
           <div className="flex items-center space-x-2 text-white">
@@ -197,7 +191,7 @@ export default function LiveAssistant() {
             <Mail className="w-4 h-4" />
             <h3 className="font-bold text-sm uppercase tracking-wider">Contact</h3>
           </div>
-          <p className="text-stone-800 font-bold text-sm break-all">Call the school office</p>
+          <p className="text-stone-800 font-bold text-sm">Call the school office</p>
           <p className="text-stone-800 font-bold text-sm">ParentSquare App</p>
         </div>
         <div className="bg-[#C41E3A] p-6 rounded-3xl shadow-md border border-white/10 space-y-3 text-white">
@@ -211,4 +205,6 @@ export default function LiveAssistant() {
         </div>
       </section>
 
-
+    </div>
+  );
+}
